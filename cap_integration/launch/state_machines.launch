@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find dialogflow_ros)/launch/hotword_df.launch"/>
+
+    <node name="cap_integration" pkg="cap_integration" type="state_machines.py" output="screen"/>
+</launch>
