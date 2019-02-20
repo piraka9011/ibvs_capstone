@@ -22,5 +22,7 @@ Steps for Realsense
 Perception Programs:
 
 bestGrips.py - Takes the best gpd grip and publishes it
+
 publishYolo.py - Grabs camera image and allows user to create a bounding box to simulate a Yolo match
+
 publishCube.py - Takes a YoloObject message and creates a bounding cube message for it
