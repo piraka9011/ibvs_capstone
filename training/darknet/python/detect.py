@@ -1,6 +1,10 @@
 from ctypes import *
 import math
 import random
+import cv2
+import time
+import numpy as np
+
 
 def sample(probs):
     s = sum(probs)
@@ -42,10 +46,10 @@ class METADATA(Structure):
     _fields_ = [("classes", c_int),
                 ("names", POINTER(c_char_p))]
 
-    
+
 
 #lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
-lib = CDLL("libdarknet.so", RTLD_GLOBAL)
+lib = CDLL("./libdarknet.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -114,45 +118,60 @@ predict_image = lib.network_predict_image
 predict_image.argtypes = [c_void_p, IMAGE]
 predict_image.restype = POINTER(c_float)
 
-def classify(net, meta, im):
-    out = predict_image(net, im)
-    res = []
-    for i in range(meta.classes):
-        res.append((meta.names[i], out[i]))
-    res = sorted(res, key=lambda x: -x[1])
-    return res
+
+def convertBack(x, y, w, h):
+    xmin = int(round(x - (w / 2)))
+    xmax = int(round(x + (w / 2)))
+    ymin = int(round(y - (h / 2)))
+    ymax = int(round(y + (h / 2)))
+    return xmin, ymin, xmax, ymax
+
+def array_to_image(arr):
+    # need to return old values to avoid python freeing memory
+    arr = arr.transpose(2,0,1)
+    c, h, w = arr.shape[0:3]
+    arr = np.ascontiguousarray(arr.flat, dtype=np.float32) / 255.0
+    data = arr.ctypes.data_as(POINTER(c_float))
+    im = IMAGE(w,h,c,data)
+    return im, arr
 
 def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
-    im = load_image(image, 0, 0)
+    im, image = array_to_image(image)
+    rgbgr_image(im)
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
-    dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum)
+    dets = get_network_boxes(net, im.w, im.h, thresh,
+                             hier_thresh, None, 0, pnum)
     num = pnum[0]
-    if (nms): do_nms_obj(dets, num, meta.classes, nms);
+    if nms: do_nms_obj(dets, num, meta.classes, nms)
 
     res = []
     for j in range(num):
-        for i in range(meta.classes):
-            if dets[j].prob[i] > 0:
+        a = dets[j].prob[0:meta.classes]
+        if any(a):
+            ai = np.array(a).nonzero()[0]
+            for i in ai:
                 b = dets[j].bbox
-                res.append((meta.names[i], dets[j].prob[i], (b.x, b.y, b.w, b.h)))
+                res.append((meta.names[i], dets[j].prob[i],
+                           (b.x, b.y, b.w, b.h)))
+
     res = sorted(res, key=lambda x: -x[1])
-    free_image(im)
+    if isinstance(image, bytes): free_image(im)
     free_detections(dets, num)
     return res
-    
-if __name__ == "__main__":
-    #net = load_net("cfg/densenet201.cfg", "/home/pjreddie/trained/densenet201.weights", 0)
-    #im = load_image("data/wolf.jpg", 0, 0)
-    #meta = load_meta("cfg/imagenet1k.data")
-    #r = classify(net, meta, im)
-    #print r[:10]
-    # net = load_net("cfg/tiny-yolo.cfg", "tiny-yolo.weights", 0)
-    net = load_net("cfg/yolo3-objv2.cfg", "backup/yolo3-objv2_10000.weights", 0)
-    # meta = load_meta("cfg/coco.data")
-    meta = load_meta("cfg/objv2.data")
-    # r = detect(net, meta, "data/dog.jpg")
-    r = detect(net, meta, "data/IMG_0314.jpg")
-    print r
-    
+
+
+def detect_object(img):
+    # img = cv2.imread('data/IMG_0314.jpg')
+
+    # Using yolov3 tiny and self-trained weights
+    # net = load_net(b"cfg/yolo3-obj-tiny.cfg", b"backup/yolo3-obj-tiny_10000.weights", 0)
+    # meta = load_meta(b"cfg/obj.data")
+
+    # Using yolov3 and self-trained weights
+    net = load_net(b"cfg/yolo3-objv2.cfg", b"backup/yolo3-objv2_10000.weights", 0)
+    meta = load_meta(b"cfg/objv2.data")
+
+    res = detect(net, meta, img)
+    return res
