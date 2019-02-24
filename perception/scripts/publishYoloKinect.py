@@ -2,11 +2,16 @@
 
 import cv2
 import sys
+import os
 import rospy
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from perception.msg import YoloObject
+
+# Import detect_object function from training package
+sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..', '..')))
+from training.detect import detect_object
 
 global cv_image
 
@@ -22,14 +27,12 @@ class YoloMock():
       cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
       cv2.imshow("Window", cv_image)
       cv2.waitKey(10)
-      r = cv2.selectROI("Window",cv_image, False)
-      print(r)
-      self.yolo.tag = 'MockImage'
-      self.yolo.score = 78.4325
-      self.yolo.baseX = r[0]
-      self.yolo.baseY = r[1]
-      self.yolo.width = r[2]
-      self.yolo.height = r[3]
+      # r = cv2.selectROI("Window",cv_image, False)
+      # format for YOLO result: [(tag, confidence, (x, y, w, h))]
+      # TODO: fallback for 1) more than 1 desired objects found 2) no desired object found? 
+      r = detect_object(img)
+      self.yolo.tag, self.yolo.score, xywh = r[0]
+      self.yolo.baseX, self.yolo.baseY, self.yolo.width, self.yolo.height = xywh
       rospy.loginfo(self.yolo)
       self.pub.publish(self.yolo)
 
@@ -52,4 +55,9 @@ def main(args):
 
 if __name__ == '__main__':
     main(sys.argv)
+
+# This part if for testing package import
+# Will remove after YOLO is installed on our hardware
+img = cv2.imread('../../training/IMG_0314.jpg')
+print detect_object(img)
 
