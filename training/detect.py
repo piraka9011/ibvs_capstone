@@ -185,5 +185,5 @@ def detect_object(img):
 
 if __name__ == '__main__':
     yolo3_meta_path = os.path.abspath(os.path.join(__file__, '..', 'darknet', 'cfg', 'objv2-py_main.data'))
-    img = cv2.imread('./darknet/data/IMG_0314.jpg')
+    img = cv2.imread('./IMG_0314.jpg')
     print detect_object(img)
