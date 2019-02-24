@@ -58,6 +58,6 @@ if __name__ == '__main__':
 
 # This part if for testing package import
 # Will remove after YOLO is installed on our hardware
-img = cv2.imread('../../training/IMG_0314.jpg')
-print detect_object(img)
+# img = cv2.imread('../../training/IMG_0314.jpg')
+# print detect_object(img)
 
