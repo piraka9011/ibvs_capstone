@@ -7,7 +7,7 @@ import rospy
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
-from perception.msg import YoloObject
+from perception.msg import YoloObject，YoloObjectList
 
 # Import detect_object function from training package
 sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..', '..')))
@@ -17,7 +17,7 @@ global cv_image
 
 class YoloMock():
   def __init__(self):
-    self.pub = rospy.Publisher('/ibvs/perception/yolo_target',YoloObject)
+    self.pub = rospy.Publisher('/ibvs/perception/yolo_target', YoloObjectList)
     self.bridge = CvBridge()
     self.sub = rospy.Subscriber('/kinect2/sd/image_color_rect',Image,self.callback)
     self.yolo = YoloObject()
@@ -29,12 +29,17 @@ class YoloMock():
       cv2.waitKey(10)
       # r = cv2.selectROI("Window",cv_image, False)
       # format for YOLO result: [(tag, confidence, (x, y, w, h))]
-      # TODO: fallback for 1) more than 1 desired objects found 2) no desired object found? 
-      r = detect_object(img)
-      self.yolo.tag, self.yolo.score, xywh = r[0]
-      self.yolo.baseX, self.yolo.baseY, self.yolo.width, self.yolo.height = xywh
-      rospy.loginfo(self.yolo)
-      self.pub.publish(self.yolo)
+      # TODO: fallback for 1) more than 1 desired objects found 2) no desired object found?
+      r = detect_object(cv_image)
+      obj_list = YoloObjectList()
+      for obj in r:
+        yolo = YoloObject()
+        yolo.tag, yolo.score, xywh = r[0]
+        yolo.baseX, yolo.baseY, yolo.width, yolo.height = xywh
+        obj_list.append(yolo)
+
+      rospy.loginfo("Object List: {}".format(obj_list))
+      self.pub.publish(obj_list)
 
     except CvBridgeError as e:
       print(e)
