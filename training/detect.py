@@ -40,7 +40,8 @@ class YOLODetector:
         self.model_to_path = {
             "yolo3_tiny": ("yolo3-obj-tiny.cfg", "obj.data", "yolo3-obj-tiny_10000.weights"),
             "yolo3": ("yolo3-objv2.cfg", "objv2-py.data", "yolo3-objv2_10000.weights"),
-            "yolo3_bunny_plushie": ("yolo3_bunny_plushie.cfg", "obj_bunny_plushie.data", "yolo3_bunny_plushie_10000.weights")
+            "yolo3_bunny_plushie": ("yolo3_bunny_plushie.cfg", "obj_bunny_plushie.data", "yolo3_bunny_plushie_10000.weights"),
+            "yolo3_bunny_plushie_tiny": ("yolo3_bunny_plushie-tiny.cfg", "obj_bunny_plushie.data", "yolo3-tiny_bunny_plushie_10000.weights")
         }
         self.load_net() 
     
@@ -171,7 +172,7 @@ class YOLODetector:
         return res
 
 
-    def run(self, img, model_name="yolo3_bunny_plushie", _meta_path=None):
+    def run(self, img, model_name="yolo3_bunny_plushie_tiny", _meta_path=None):
         # Using yolov3 and self-trained weights
         cfg_path, meta_path, object_weight_path = self._get_path(model_name)
         if _meta_path: # load from __main__
