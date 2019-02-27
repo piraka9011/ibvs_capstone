@@ -4,3 +4,16 @@ training/darknet/backup
 *.pyc
 *.zip
 .vscode
+.idea/
+cap_integration/.catkin_tools
+cap_integration/build
+cap_integration/devel
+cap_integration/logs
+perception/.catkin_tools
+perception/build
+perception/devel
+perception/logs
+training/.catkin_tools
+training/build
+training/devel
+training/logs

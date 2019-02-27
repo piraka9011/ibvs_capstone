@@ -175,16 +175,23 @@ class YOLODetector:
     def run(self, img, model_name="yolo3_bunny_plushie_tiny", _meta_path=None):
         # Using yolov3 and self-trained weights
         cfg_path, meta_path, object_weight_path = self._get_path(model_name)
+        print("After get path")
         if _meta_path: # load from __main__
             meta_path = _meta_path
         net = self.load_net(cfg_path, object_weight_path, 0)
+        print(cfg_path)
+        print("After load net")
+        print(meta_path)
+        print(os.path.abspath(__file__))
         meta = self.load_meta(meta_path)
+        print("After load meta")
 
         res = self._detect(net, meta, img)
+        print("After detect")
         return res
 
 if __name__ == '__main__':
-    yolo3_meta_path = os.path.abspath(os.path.join(__file__, '..', 'darknet', 'cfg', 'objv2-py_main.data'))
-    img = cv2.imread('./IMG_0314.jpg')
+    yolo3_bunny_meta_path = os.path.abspath(os.path.join(__file__, '..', 'darknet', 'cfg', 'obj_bunny_plushie-py_main.data'))
+    img = cv2.imread('./bunny_plushie_1.jpg')
     d = YOLODetector()
-    print d.run(img, "yolo3", yolo3_meta_path)
+    print d.run(img, "yolo3_bunny_plushie_tiny", yolo3_bunny_meta_path)

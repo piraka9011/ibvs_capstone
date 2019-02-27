@@ -8,10 +8,11 @@ from gpd.srv import SetParameters
 
 global cv_image
 
+
 class GPD_talker():
   def __init__(self):
     self.pub = rospy.ServiceProxy('/gpd/set_params', SetParameters)
-    self.sub = rospy.Subscriber('/ibvs/perception/yolo_target',YoloObject,self.callback)
+    self.sub = rospy.Subscriber('/jake',YoloObject,self.callback)
     self.service = SetParameters()
     self.setMessage()
 
@@ -26,17 +27,18 @@ class GPD_talker():
 
   def callback(self,data):
     self.service.set_workspace = True
-    XOFFSET = -.05
+    SCALE = .13
+    XOFFSET = -.0
     XSCALE = 320
-    YOFFSET = -.0
+    YOFFSET = -.025
     YSCALE = 240
     ws = [0.0,0.0,0.0,0.0,0.0,0.0]
-    ws[0] = -1 + (data.baseX/XSCALE) + XOFFSET
-    ws[1] = -1 +(data.baseX + data.width) / XSCALE  + XOFFSET
-    ws[2] = -1 + (data.baseY/YSCALE) + YOFFSET
-    ws[3] = -1 + (data.baseY + data.height) / YSCALE + YOFFSET
+    ws[0] = (-1 + data.baseX/XSCALE) * SCALE + XOFFSET
+    ws[1] = (-1 + (data.baseX + data.width) / XSCALE) * SCALE + XOFFSET
+    ws[2] = (-1 + (data.baseY/YSCALE))* SCALE + YOFFSET
+    ws[3] = (-1 + (data.baseY + data.height) / YSCALE)* SCALE + YOFFSET
     ws[4] = 0.5 #minZ  
-    ws[5] = 2.25#maxZ
+    ws[5] = 1.5#maxZ
     self.service.workspace = ws
     rospy.loginfo(self.service.workspace)
     result = self.pub(set_workspace=True, workspace=ws)
