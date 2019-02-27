@@ -7,11 +7,11 @@ import rospy
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
-from perception.msg import YoloObject，YoloObjectList
+from perception.msg import YoloObject, YoloObjectList
 
 # Import detect_object function from training package
-sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..', '..')))
-from training.detect import detect_object
+sys.path.append(os.path.abspath(os.path.join(__file__,'..', '..', '..')))
+from training.detect import YOLODetector
 
 global cv_image
 
@@ -63,6 +63,6 @@ if __name__ == '__main__':
 
 # This part if for testing package import
 # Will remove after YOLO is installed on our hardware
-# img = cv2.imread('../../training/IMG_0314.jpg')
-# print detect_object(img)
-
+d = YOLODetector()
+img = cv2.imread('../../training/bunny_plushie_1.jpg')
+print d.run(img)
