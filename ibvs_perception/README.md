@@ -12,6 +12,8 @@ export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY
 4. Download [cuDNN](https://developer.nvidia.com/rdp/form/cudnn-download-survey) and install it according to provided instructions (Your cuda path should be in `/usr/local/cuda-8.0`).
 
 ## Caffe
+Note that installing caffe does not have to be in the ROS workspace.
+
 1. Install the following:
 ```
 sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler libatlas-base-dev
@@ -68,6 +70,12 @@ catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
 catkin_make install
 source ~/.bashrc
 ```
+With catkin build
+```
+catkin build --cmake-args -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
+catkin build --make-args install
+```
+
 3. Run the bridge (roslaunch realsense2_camera rs_rgbd.launch )
 4. Run gpd (roslauch gpd realsense.launch)
 
@@ -82,3 +90,11 @@ publishCube.py - Takes a YoloObject message and creates a bounding cube message 
 Steps for Kinectv2
 1. Install libfreenect2
 2. Install iai_kinect2 bridge
+
+## Troubleshooting
+If you run into issues with compilation where caffe complains that it can't find `caffe.pb.h`, navigate to the caffe directory and run the following: (Extracted from [here](https://github.com/muupan/dqn-in-the-caffe/issues/3#issuecomment-70795202)).
+```
+protoc src/caffe/proto/caffe.proto --cpp_out=.
+mkdir include/caffe/proto
+mv src/caffe/proto/caffe.pb.h include/caffe/proto
+```
