@@ -15,14 +15,16 @@ def callback(msg):
 	rospy.loginfo(grasp)
 	pub.publish(grasp)
 
-pub = rospy.Publisher('detect_grasps/best_grasp', GraspConfig)
-rospy.init_node('bestGrip', anonymous=True)
+if __name__ == '__main__':
+	rospy.init_node('bestGrip', anonymous=True)
+	pub_topic = rospy.get_param('/ibvs/grasp_topic', '/ibvs/best_grasp')
+	pub = rospy.Publisher(pub_topic, GraspConfig)
 
-# Subscribe to the ROS topic that contains the grasps.
-grasps_sub = rospy.Subscriber('/detect_grasps/clustered_grasps', GraspConfigList, callback)
+	# Subscribe to the ROS topic that contains the grasps.
+	grasps_sub = rospy.Subscriber('/detect_grasps/clustered_grasps', GraspConfigList, callback)
 
-# Wait for grasps to arrive.
-rate = rospy.Rate(1)
+	# Wait for grasps to arrive.
+	rate = rospy.Rate(1)
 
-while not rospy.is_shutdown():    
-    rate.sleep()
+	while not rospy.is_shutdown():    
+	    rate.sleep()
