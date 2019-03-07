@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>perception</name>
+  <name>ibvs_perception</name>
   <version>1.0.0</version>
   <description>This package uses Yolo and GDP to detect grips on a subsection of a point cloud</description>
 

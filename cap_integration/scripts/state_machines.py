@@ -1,11 +1,20 @@
 #!/usr/bin/env python
-
+import sys
+sys.path.insert(0, '/home/piraka/sawyer_ws/src/ibvs_capstone/perception')
 from rospy_message_converter import message_converter
 import rospy
 import smach
+import smach_ros
 import threading
 from std_msgs.msg import String
-from dialogflow_ros.msg import *
+from dialogflow_ros.msg import DialogflowResult, DialogflowParameter
+from perception.msg import YoloObject, YoloObjectList
+import signal
+
+def signal_handler(sig, frame):
+        print('You pressed Ctrl+C!')
+        sys.exit(0)
+
 
 class WaitForMsgState(smach.State):
     """
@@ -89,11 +98,21 @@ class PublishMsgState(smach.State):
         self.pub.publish(ud.publish_msg)
         return 'succeeded'
 
+def amber_result(msg, ud):
+  objects = msg.objects#ud.obj_list
+  for obj in objects:
+      if obj.tag.lower() == ud.obj.value[0].lower():
+          #rospy.loginfo("In if statement")
+          ud.publish_msg = obj
+      #rospy.loginfo(obj.tag.lower())
+      #rospy.loginfo(ud.obj.value[0].lower())
+  rospy.loginfo(objects)
 
 def dialogflowresult_format(msg, ud):
     ud.action = msg.action
     ud.parameters = msg.parameters
-    ud.publish_msg = msg.action
+    ud.obj = msg.parameters[0]
+    ud.publish_msg = "start"
     rospy.loginfo(ud.action)
     return True
 
@@ -101,19 +120,23 @@ def dialogflowresult_format(msg, ud):
 def main():
     rospy.init_node('integration')
 
+    yolo_target_topic = rospy.get_param('/camera/color/image_rect_color', '/ibvs/perception/yolo_target')
+    
     sm_top = smach.StateMachine(outcomes=['success'])
     sm_top.userdata.parameters = []
     sm_top.userdata.action = ""
-    sm_top.userdata.pcl = ""
-    sm_top.userdata.xyz = ""
+    sm_top.userdata.obj_list = YoloObjectList()
+    sm_top.userdata.obj = ""
     sm_top.userdata.publish_msg = {}
 
     with sm_top:
 
         smach.StateMachine.add('NLPsub', WaitForMsgState('/dialogflow_client/results', DialogflowResult,
                                                          msg_cb=dialogflowresult_format, state_name="NLPsub",
-                                                         output_keys=['publish_msg', 'action', 'parameters'],
-                                                         input_keys=['publish_msg', 'action', 'parameters']),
+                                                         output_keys=['publish_msg', 'action', 'parameters', 'obj_list',
+                                                            'obj'],
+                                                         input_keys=['publish_msg', 'action', 'parameters', 'obj_list',
+                                                            'obj']),
                                transitions={'succeeded': 'NLPpub',
                                             'aborted': 'NLPsub'})
 
@@ -122,32 +145,35 @@ def main():
                                                          input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'AMBERsub',
                                             'aborted': 'NLPpub'})
-        smach.StateMachine.add('AMBERsub', WaitForMsgState('/nlp', String, state_name="AMBERsub",
-                                                           output_keys=['publish_msg', 'action', 'parameters'],
-                                                           input_keys=['publish_msg', 'action', 'parameters']),
-                               transitions={'succeeded': 'AMBERpub',
+        smach.StateMachine.add('AMBERsub', WaitForMsgState('/amber', YoloObjectList, state_name="AMBERsub",
+                                                           output_keys=['publish_msg', 'action', 'parameters',
+                                                            'obj_list', 'obj'],
+                                                           input_keys=['publish_msg', 'action', 'parameters', 'obj_list',
+                                                            'obj'], msg_cb=amber_result),
+                               transitions={'succeeded': 'JAKEpub',
                                             'aborted': 'AMBERsub'})
         smach.StateMachine.add('AMBERpub', PublishMsgState('/amber', state_name='AMBERpub',
                                                            output_keys=['publish_msg', 'action', 'parameters'],
                                                            input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'JAKEsub',
                                             'aborted': 'AMBERsub'})
-        smach.StateMachine.add('JAKEsub', WaitForMsgState('/amber', String, state_name='JAKEsub',
+        smach.StateMachine.add('JAKEsub', WaitForMsgState('/amber', YoloObject, state_name='JAKEsub',
                                                           output_keys=['publish_msg', 'action', 'parameters'],
                                                           input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'JAKEpub',
                                             'aborted': 'JAKEsub'})
-        smach.StateMachine.add('JAKEpub', PublishMsgState('/jake', state_name='JAKEpub',
+        smach.StateMachine.add('JAKEpub', PublishMsgState('/jake', state_name='JAKEpub', message_type=YoloObject,
                                                           output_keys=['publish_msg', 'action', 'parameters'],
                                                           input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'ANASpub',
                                             'aborted': 'JAKEpub'})
-        smach.StateMachine.add('ANASsub', WaitForMsgState('/jake', String, state_name='ANASsub',
+        smach.StateMachine.add('ANASsub', WaitForMsgState('/jake', YoloObject, state_name='ANASsub',
                                                           output_keys=['publish_msg', 'action', 'parameters'],
                                                           input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'ANASpub',
                                             'aborted': 'ANASsub'})
-        smach.StateMachine.add('ANASpub', PublishMsgState('/anas', state_name='ANASpub',
+        # TODO: Change the message_type from the one from jake by changing message_type
+        smach.StateMachine.add('ANASpub', PublishMsgState('/anas', state_name='ANASpub', message_type=YoloObject,
                                                           output_keys=['publish_msg', 'action', 'parameters'],
                                                           input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'success',
@@ -156,11 +182,13 @@ def main():
 
 
 
-
+    sis = smach_ros.IntrospectionServer('server_name', sm_top, '/SM_ROOT')
+    sis.start()
 
     # Execute SMACH plan
     outcome = sm_top.execute()
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
     main()

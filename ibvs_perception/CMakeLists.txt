@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(perception)
+project(ibvs_perception)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -94,7 +94,7 @@ generate_messages(DEPENDENCIES geometry_msgs sensor_msgs std_msgs)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-INCLUDE_DIRS include
+# INCLUDE_DIRS include
 CATKIN_DEPENDS cmake_modules geometry_msgs message_runtime roscpp sensor_msgs std_msgs
 DEPENDS OpenCV PCL
 )
@@ -105,7 +105,7 @@ DEPENDS OpenCV PCL
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ## Declare a C++ library
 

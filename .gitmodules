@@ -4,3 +4,6 @@
 [submodule "sawyer_kinematics"]
 	path = sawyer_kinematics
 	url = https://github.com/piraka9011/sawyer_kinematics.git
+[submodule "dialogflow_ros"]
+	path = dialogflow_ros
+	url = https://github.com/piraka9011/dialogflow_ros
