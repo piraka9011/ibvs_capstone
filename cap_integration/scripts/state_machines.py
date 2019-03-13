@@ -138,6 +138,15 @@ def amber_result(msg, ud):
       #rospy.loginfo(ud.obj.value[0].lower())
   rospy.loginfo(objects)
 
+def amber_result(msg, ud):
+  objects = msg.objects#ud.obj_list
+  for obj in objects:
+      if obj.tag.lower() == ud.obj.value[0].lower():
+          #rospy.loginfo("In if statement")
+          ud.publish_msg = obj
+      #rospy.loginfo(obj.tag.lower())
+      #rospy.loginfo(ud.obj.value[0].lower())
+  rospy.loginfo(objects)
 
 def dialogflowresult_format(msg, ud):
     ud.action = msg.action
@@ -162,7 +171,6 @@ def main():
     sm_top.userdata.publish_msg = {}
 
     with sm_top:
-
         output_keys = ['publish_msg', 'action', 'parameters', 'obj_list', 'obj']
         input_keys = ['publish_msg', 'action', 'parameters', 'obj_list', 'obj']
         smach.StateMachine.add('NLPsub',
@@ -183,7 +191,6 @@ def main():
                                                input_keys=input_keys),
                                transitions={'succeeded': 'AMBERsub',
                                             'aborted': 'NLPpub'})
-
         output_keys = ['publish_msg', 'action', 'parameters', 'obj_list', 'obj']
         input_keys = output_keys
         smach.StateMachine.add('AMBERsub', WaitForMsgState('/amber', YoloObjectList,
