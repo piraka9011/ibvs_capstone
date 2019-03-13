@@ -12,7 +12,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY
 4. Download [cuDNN](https://developer.nvidia.com/rdp/form/cudnn-download-survey) and install it according to provided instructions (Your cuda path should be in `/usr/local/cuda-8.0`).
 
 ## Caffe
-Note that installing caffe does not have to be in the ROS workspace.
+Note that installing caffe does not have to be in the ROS workspace. [Build Troubleshooting](https://github.com/BVLC/caffe/wiki/Commonly-encountered-build-issues)
 
 1. Install the following:
 ```
