@@ -1,7 +1,8 @@
 <launch>
 
     <arg name="device" default="0" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
-    <arg name="cloud_topic" default="/kinect2/sd/points"/>
+    <arg name="cloud_topic" default="/kinect2/qhd/points"/>
+    <arg name="filter_cloud_topic" default="/ibvs_perception/filtered_points"/>
     <arg name="image_topic" default="/kinect2/qhd/image_color_rect"/>
     <arg name="grasp_topic" default="/ibvs_perception/best_grasp"/>
     <arg name="debug" default="true"/>
@@ -25,7 +26,7 @@
 
         <!-- What type of point cloud is used and what ROS topic it comes from -->
         <param name="cloud_type" value="0"/> <!-- 0: PointCloud2, 1: CloudSized, 2: CloudIndexed, 3: CloudSamples -->
-        <param name="cloud_topic" value="$(arg cloud_topic)"/>
+        <param name="cloud_topic" value="$(arg filter_cloud_topic)"/>
 
         <!-- (optional) The ROS topic that the samples come from (default: an empty string) -->
         <param name="samples_topic" value=""/>
@@ -75,6 +76,8 @@
     </node>
 
     <group if="$(arg debug)">
+        <param name="/ibvs_perception/filter_cloud_topic" type="str" value="$(arg filter_cloud_topic)"/>
+        <param name="/ibvs_perception/grasp_topic" type="str" value="$(arg grasp_topic)"/>
         <!--<node name="ibvs_best_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen">-->
             <!--<param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>-->
         <!--</node>-->
