@@ -3,6 +3,8 @@
     <arg name="device" default="0" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
     <arg name="cloud_topic" default="/kinect2/sd/points"/>
     <arg name="image_topic" default="/kinect2/qhd/image_color_rect"/>
+    <arg name="grasp_topic" default="/ibvs_perception/best_grasp"/>
+    <arg name="debug" default="true"/>
 
     <!-- Load hand geometry parameters -->
     <include file="$(find gpd)/launch/hand_geometry.launch">
@@ -72,10 +74,16 @@
         <param name="num_selected" value="5"/>
     </node>
 
-    <node name="best_grip" pkg="ibvs_perception" type="bestGrip.py"/>
+    <group if="$(arg debug)">
+        <!--<node name="ibvs_best_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen">-->
+            <!--<param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>-->
+        <!--</node>-->
+    </group>
+    <group unless="$(arg debug)">
+        <node name="ibvs_yolo_kinect" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen">
+            <param name="/camera_topic" type="str" value="$(arg image_topic)"/>
+        </node>
+    </group>
 
-    <node name="yolo_pub" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen">
-        <param name="/ibvs/camera_topic" type="str" value="$(arg image_topic)"/>
-    </node>
 
 </launch>

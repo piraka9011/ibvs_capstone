@@ -23,7 +23,7 @@ global cv_image
 class YoloMock():
     def __init__(self):
         # /kinect2/sd/image_color_rect
-        camera_topic = rospy.get_param('/ibvs/camera_topic',
+        camera_topic = rospy.get_param('/ibvs_yolo_kinect/camera_topic',
                                        '/camera/color/image_rect_color')
         target_topic = rospy.get_param('/ibvs/yolo_target_topic',
                                        '/ibvs/perception/yolo_target')
@@ -66,7 +66,7 @@ def callback(data):
             while not rospy.is_shutdown():
                 r.sleep()
         except KeyboardInterrupt:
-            print("Shutting down")
+            rospy.logwarn("Shutting down {}".format(rospy.get_name()))
 
         cv2.destroyAllWindows()
 
@@ -74,6 +74,7 @@ def callback(data):
 def main(args):
     rospy.init_node('YoloMock', anonymous=True)
     rospy.Subscriber("/nlp", String, callback)
+    rospy.loginfo("Spinning...")
     rospy.spin()
 
 

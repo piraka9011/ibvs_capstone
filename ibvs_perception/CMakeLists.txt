@@ -4,8 +4,15 @@ project(ibvs_perception)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs message_generation roscpp
-  sensor_msgs std_msgs gpd)
+find_package(catkin REQUIRED COMPONENTS cmake_modules
+  dynamic_reconfigure
+  geometry_msgs
+  gpd
+  message_generation
+  roscpp
+  sensor_msgs
+  std_msgs
+)
 
 # PCL
 find_package(PCL REQUIRED)
@@ -79,10 +86,9 @@ generate_messages(DEPENDENCIES geometry_msgs sensor_msgs std_msgs)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/GPDws.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
