@@ -1,17 +1,34 @@
 #!/usr/bin/env python
+
 import rospy
 from dynamic_reconfigure.server import Server
+from geometry_msgs.msg import TransformStamped
 from gpd.msg import GraspConfigList
 from gpd.msg import GraspConfig
 from gpd.srv import SetParameters
 from ibvs_perception.cfg import GPDwsConfig
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import Header
-from visualization_msgs.msg import Marker, MarkerArray
+from tf.transformations import quaternion_from_euler, quaternion_multiply
+import tf2_ros
+from visualization_msgs.msg import Marker
 from sensor_msgs import point_cloud2
 
+from math import pi
+import numpy as np
+from numpy.linalg import norm
 import signal
 import sys
+
+
+# Simple Quaternion Rotation mat. from euler angles
+def R(axis, angle):
+    if axis == "x":
+        return quaternion_from_euler(angle, 0, 0)
+    elif axis == "y":
+        return quaternion_from_euler(0, angle, 0)
+    elif axis == "z":
+        return quaternion_from_euler(0, 0, angle)
 
 
 class BestGrasps:
@@ -20,15 +37,14 @@ class BestGrasps:
         self.gpd_srv = rospy.ServiceProxy('/gpd/set_params', SetParameters)
         self.gpd_srv_param = SetParameters()
 
+        self.grasp_br = tf2_ros.TransformBroadcaster()
+        self.grasp_br_trans = tf2_ros.TransformBroadcaster()
+
         self.cfg_server = Server(GPDwsConfig, self.cfg_callback)
 
-        self.x_min, self.x_max = -0.36, -0.06
-        self.y_min, self.y_max = -0.18, 0.15
+        self.x_min, self.x_max = 0.03, 0.15
+        self.y_min, self.y_max = -0.21, -0.09
         self.z_min, self.z_max = 0.0, 2.0
-        self.ws_marker = self.create_ws_marker(self.x_min, self.x_max,
-                                               self.y_min, self.y_max,
-                                               self.z_min, self.z_max)
-        self.marker_pub = rospy.Publisher('/visualization_marker', Marker, queue_size=5)
 
         grasp_topic = rospy.get_param('/ibvs_best_grip/grasp_topic',
                                       '/ibvs_perception/best_grasp')
@@ -50,9 +66,6 @@ class BestGrasps:
             rospy.logwarn_throttle(5, "Waiting for grasps...")
             rate.sleep()
 
-        while self.marker_pub.get_num_connections() == 0:
-            rate.sleep()
-
     def cfg_callback(self, config, level):
         rospy.loginfo("Got a reconfigure")
         set_ws = config.set_ws
@@ -69,18 +82,13 @@ class BestGrasps:
                     config.grasp_ws_min_z, config.grasp_ws_max_z]
         cam_pos = [config.cam_pos_x, config.cam_pos_y, config.cam_pos_z]
         self.set_message(set_ws, ws, set_grasp_ws, grasp_ws, set_cam_pos, cam_pos)
-        self.ws_marker = self.create_ws_marker(config.ws_min_x, config.ws_max_x,
-                                               config.ws_min_y, config.ws_max_y,
-                                               config.ws_min_z, config.ws_max_z)
         return config
 
     def grasp_callback(self, msg):
-        self.ws_marker.header.stamp = rospy.Time.now()
-        self.marker_pub.publish(self.ws_marker)
-
         grasps = msg.grasps
         if len(grasps) > 0:
             grasp = grasps[0]  # grasps are sorted in descending order by score
+            self._grasp_to_tf(grasp)
             rospy.logdebug('Selected grasp with score: {}'.format(grasp.score.data))
             rospy.logdebug(grasp)
             self.grasp_pub.publish(grasp)
@@ -100,39 +108,63 @@ class BestGrasps:
         pc2_msg = point_cloud2.create_cloud_xyz32(pc2_header, new_cloud_list)
         self.pc_pub.publish(pc2_msg)
 
+    def _unit_vector(self, v):
+        return v / norm(v)
 
-    def create_ws_marker(self, x_min, x_max, y_min, y_max, z_min, z_max):
-        dx = x_max - x_min
-        dy = y_max - y_min
-        dz = z_max - z_min
-        m1 = Marker()
-        m1.ns = "ibvs_marker"
-        m1.id = 0
-        m1.type = m1.CUBE
-        m1.action = m1.ADD
-        m1.pose.position.x = (x_max - dx / 2)
-        m1.pose.position.y = (y_max - dy / 2)
-        m1.pose.position.z = (z_max - dz / 2)
-        m1.pose.orientation.x = 0.0
-        m1.pose.orientation.y = 0.0
-        m1.pose.orientation.z = 0.0
-        m1.pose.orientation.w = 1.0
-        m1.scale.x = dx
-        m1.scale.y = dy
-        m1.scale.z = dz
-        m1.color.r = 1.0
-        m1.color.g = 0.0
-        m1.color.b = 0.0
-        m1.color.a = 0.5
-        m1.lifetime = rospy.Duration()
-        # m1.header.frame_id = "/kinect2_link"
-        m1.header.frame_id = "/base"
-        m1.header.stamp = rospy.Time.now()
-        return m1
+    def _axis_angle(self, axis, v):
+        axis_norm = self._unit_vector(axis)
+        v_norm = self._unit_vector(v)
+        result = np.arccos(np.clip(np.dot(axis_norm, v_norm), -1.0, -1.0))
+        if not np.isnan(result):
+            return result
+        else:
+            return 0.0
 
-    def set_message(self,
-                    set_ws=True, ws=None,
-                    set_ws_grasps=False, ws_grasps=None,
+    def _grasp_to_tf(self, grasp):
+        tf_stamped = TransformStamped()
+        tf_stamped.child_frame_id = 'grasp'
+        tf_stamped.header.frame_id = 'kinect2_link'
+
+        # Translation
+        sample = grasp.sample
+        tf_stamped.transform.translation.x = sample.x
+        tf_stamped.transform.translation.y = sample.y
+        tf_stamped.transform.translation.z = sample.z
+
+        # Rotation
+        x_axis = np.array([1, 0, 0])
+        y_axis = np.array([0, 1, 0])
+        z_axis = np.array([0, 0, 1])
+        x_grasp = np.array([grasp.axis.x, grasp.axis.y, grasp.axis.z])
+        y_grasp = np.array([grasp.binormal.x, grasp.binormal.y, grasp.binormal.z])
+        z_grasp = np.array([grasp.approach.x, grasp.approach.y, grasp.approach.z])
+        x_angle = self._axis_angle(-z_axis, x_grasp)
+        y_angle = self._axis_angle(y_axis, y_grasp)
+        z_angle = self._axis_angle(x_axis, z_grasp)
+        Qg = quaternion_from_euler(x_angle, y_angle, z_angle)
+        tf_stamped.transform.rotation.x = Qg[0]
+        tf_stamped.transform.rotation.y = Qg[1]
+        tf_stamped.transform.rotation.z = Qg[2]
+        tf_stamped.transform.rotation.w = Qg[3]
+
+        # Stamp
+        tf_stamped.header.stamp = rospy.Time.now()
+        self.grasp_br.sendTransform(tf_stamped)
+
+        # Create one for translation
+        Tr = tf_stamped
+        Qt = quaternion_multiply(Qg, R('x', pi))
+        Qt = quaternion_multiply(Qt, R('z', pi/2))
+        Tr.transform.rotation.x = Qt[0]
+        Tr.transform.rotation.y = Qt[1]
+        Tr.transform.rotation.z = Qt[2]
+        Tr.transform.rotation.w = Qt[3]
+        Tr.header.stamp = rospy.Time.now()
+        Tr.child_frame_id = 'grasp_trans'
+        self.grasp_br_trans.sendTransform(Tr)
+        return tf_stamped
+
+    def set_message(self, set_ws=True, ws=None, set_ws_grasps=False, ws_grasps=None,
                     set_cam=False, cam_pos=None):
         zero_ws = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         zero_pos = [0.0, 0.0, 0.0]
@@ -144,7 +176,6 @@ class BestGrasps:
         self.gpd_srv_param.camera_position = zero_pos if cam_pos is None else cam_pos
 
     def start_sim(self):
-        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             try:
                 rospy.spin()
