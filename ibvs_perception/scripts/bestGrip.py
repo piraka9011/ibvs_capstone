@@ -49,11 +49,14 @@ class BestGrasps:
         grasp_topic = rospy.get_param('/ibvs_best_grip/grasp_topic',
                                       '/ibvs_perception/best_grasp')
         self.grasp_pub = rospy.Publisher(grasp_topic, GraspConfig, queue_size=10)
+        
         grasp_sub = rospy.Subscriber('/detect_grasps/clustered_grasps',
                                      GraspConfigList, self.grasp_callback)
 
-        cloud_topic = '/kinect2/qhd/points'
+        cloud_topic = rospy.get_param('/ibvs_perception/cloud_topic',
+                                      '/camera/depth_registered/points')
         pc_sub = rospy.Subscriber(cloud_topic, PointCloud2, self.pc_callback)
+
         filter_cloud_topic = rospy.get_param('/ibvs_perception/filter_cloud_topic',
                                              '/ibvs_perception/filtered_points')
         self.pc_pub = rospy.Publisher(filter_cloud_topic, PointCloud2, queue_size=100)

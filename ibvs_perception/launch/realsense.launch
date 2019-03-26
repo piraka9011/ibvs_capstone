@@ -1,73 +1,93 @@
 <launch>
 
-  <arg name="device" default="0" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA" />
+    <arg name="device" default="0" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
+    <arg name="cloud_topic" default="/camera/depth_registered/points"/>
+    <arg name="filter_cloud_topic" default="/ibvs_perception/filtered_points"/>
+    <arg name="image_topic" default="/camera/color/image_rect_color"/>
+    <arg name="grasp_topic" default="/ibvs_perception/best_grasp"/>
+    <arg name="debug" default="true"/>
 
-  <!-- Load hand geometry parameters -->  
-  <include file="$(find gpd)/launch/hand_geometry.launch">
-    <arg name="node" value="detect_grasps" />
-  </include>
+    <!-- Load hand geometry parameters -->
+    <include file="$(find gpd)/launch/hand_geometry.launch">
+        <arg name="node" value="detect_grasps"/>
+    </include>
 
-  <!-- Load classifier parameters -->
-  <include file="$(find gpd)/launch/caffe/classifier_15channels.launch">
-    <arg name="node" value="detect_grasps" />
-  </include>
-  
-  <node name="detect_grasps" pkg="gpd" type="detect_grasps" output="screen">
+    <!-- Load classifier parameters -->
+    <include file="$(find gpd)/launch/caffe/classifier_15channels.launch">
+        <arg name="node" value="detect_grasps"/>
+    </include>
 
-    <param name="device" type="int" value="$(arg device)" />
+    <node name="detect_grasps" pkg="gpd" type="detect_grasps" output="screen">
 
-    <!-- If sequential importance sampling is used (default: false) -->
-    <param name="use_importance_sampling" value="false" />
+        <param name="device" type="int" value="$(arg device)"/>
 
-    <!-- What type of point cloud is used and what ROS topic it comes from -->
-    <param name="cloud_type" value="0" /> <!-- 0: PointCloud2, 1: CloudSized, 2: CloudIndexed, 3: CloudSamples -->
-    <param name="cloud_topic" value="/camera/depth_registered/points" />
+        <!-- If sequential importance sampling is used (default: false) -->
+        <param name="use_importance_sampling" value="false"/>
 
-    <!-- (optional) The ROS topic that the samples come from (default: an empty string) -->
-    <param name="samples_topic" value="" />
+        <!-- What type of point cloud is used and what ROS topic it comes from -->
+        <param name="cloud_type" value="0"/> <!-- 0: PointCloud2, 1: CloudSized, 2: CloudIndexed, 3: CloudSamples -->
+        <param name="cloud_topic" value="$(arg filter_cloud_topic)"/>
 
-    <!-- Plotting parameters -->
-    <param name="plot_normals" value="false" />
-    <param name="plot_samples" value="false" />
-    <param name="plot_candidates" value="false" />
-    <param name="plot_filtered_grasps" value="false" />
-    <param name="plot_valid_grasps" value="false" />
-    <param name="plot_clusters" value="false" />
-    <param name="plot_selected_grasps" value="false" />
-    <param name="rviz_topic" value="grasps_rviz" />
+        <!-- (optional) The ROS topic that the samples come from (default: an empty string) -->
+        <param name="samples_topic" value=""/>
 
-    <!-- Preprocessing of point cloud -->
-    <param name="voxelize" value="true"/>
-    <param name="remove_outliers" value="false"/>
-    <rosparam param="workspace"> [-1, 1, -1, 1, 0, 2] </rosparam>
-    <rosparam param="camera_position"> [0, 0, 0] </rosparam>
+        <!-- Plotting parameters -->
+        <param name="plot_normals" value="false"/>
+        <param name="plot_samples" value="false"/>
+        <param name="plot_candidates" value="false"/>
+        <param name="plot_filtered_grasps" value="false"/>
+        <param name="plot_valid_grasps" value="false"/>
+        <param name="plot_clusters" value="false"/>
+        <param name="plot_selected_grasps" value="false"/>
+        <param name="rviz_topic" value="grasps_rviz"/>
 
-    <!-- General parameters -->
-    <param name="num_samples" value="100" />
-    <param name="num_threads" value="4" />
+        <!-- Preprocessing of point cloud -->
+        <param name="voxelize" value="true"/>
+        <param name="remove_outliers" value="false"/>
+        <rosparam param="workspace">[-1, 1, -1, 1, 0, 2]</rosparam>
+        <rosparam param="camera_position">[0, 0, 0]</rosparam>
 
-    <!-- Parameters for local grasp candidate search -->
-    <param name="nn_radius" value="0.01" />
-    <param name="num_orientations" value="8" /> <!-- Number of orientations to consider -->
+        <!-- General parameters -->
+        <param name="num_samples" value="100"/>
+        <param name="num_threads" value="4"/>
 
-    <!-- Filtering of grasp candidates -->
-    <param name="filter_grasps" value="false" /> <!-- on workspace and robot hand aperture -->
-    <rosparam param="workspace_grasps"> [0.55, 1.0, -0.41, 0.03, -0.29, 1.0] </rosparam>
-    <param name="filter_half_antipodal" value="false"/> <!-- on half antipodal -->
+        <!-- Parameters for local grasp candidate search -->
+        <param name="nn_radius" value="0.01"/>
+        <param name="num_orientations" value="8"/> <!-- Number of orientations to consider -->
 
-    <!-- Grasp image creation -->
-    <param name="create_image_batches" value="false" /> <!-- creates grasp images in batches (less memory usage) -->
-    <param name="remove_plane_before_image_calculation" value="false" /> <!-- removes table plane from point cloud to speed up shadow computations -->
+        <!-- Filtering of grasp candidates -->
+        <param name="filter_grasps" value="false"/> <!-- on workspace and robot hand aperture -->
+        <rosparam param="workspace_grasps">[0.55, 1.0, -0.41, 0.03, -0.29, 1.0]</rosparam>
+        <param name="filter_half_antipodal" value="false"/> <!-- on half antipodal -->
 
-    <!-- Clustering of grasps -->
-    <param name="min_inliers" value="1" />
+        <!-- Grasp image creation -->
+        <param name="create_image_batches" value="false"/> <!-- creates grasp images in batches (less memory usage) -->
+        <param name="remove_plane_before_image_calculation"
+               value="false"/> <!-- removes table plane from point cloud to speed up shadow computations -->
 
-    <!-- Grasp selection -->
-    <param name="min_score_diff" value="0" />
-    <param name="min_aperture" value="0.029" />
-    <param name="max_aperture" value="0.072" />
-    <param name="num_selected" value="5" />
-        
-	</node>
-  
+        <!-- Clustering of grasps -->
+        <param name="min_inliers" value="1"/>
+
+        <!-- Grasp selection -->
+        <param name="min_score_diff" value="0"/>
+        <param name="min_aperture" value="0.029"/>
+        <param name="max_aperture" value="0.072"/>
+        <param name="num_selected" value="5"/>
+
+    </node>
+
+    <group if="$(arg debug)">
+        <param name="/ibvs_perception/filter_cloud_topic" type="str" value="$(arg filter_cloud_topic)"/>
+        <param name="/ibvs_perception/grasp_topic" type="str" value="$(arg grasp_topic)"/>
+        <param name="/ibvs_perception/cloud_topic" type="str" value="$(arg cloud_topic)"/>
+        <!--<node name="ibvs_best_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen">-->
+        <!--<param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>-->
+        <!--</node>-->
+    </group>
+
+    <group unless="$(arg debug)">
+        <node name="ibvs_yolo_kinect" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen">
+            <param name="/camera_topic" type="str" value="$(arg image_topic)"/>
+        </node>
+    </group>
 </launch>

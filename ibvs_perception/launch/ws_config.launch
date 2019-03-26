@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="rqt_gui" type="rqt_gui" name="ws_rqt_gui" args="-s reconfigure"/>
+</launch>
