@@ -1,5 +1,28 @@
 Demo Directions so far:
 
+roslaunch cap_integration state_machines.launch
+
+should launch:
+* dialogflow (speech or text depending on which is commented out)
+* object detection
+* realsense (commented out because someone in the lab was running it)
+* state machines
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Keeping below in case it we need to go back
+
 Open a terminal:
 cd /home/piraka/sawyer_ws
 ./intera.sh
