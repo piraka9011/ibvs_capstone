@@ -1,0 +1,3 @@
+<launch>
+    <node name="ibvs_object_detection" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen"/>
+</launch>

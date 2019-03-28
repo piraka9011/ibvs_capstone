@@ -128,18 +128,8 @@ class PublishMsgState(smach.State):
         return SUCCEEDED
 
 
-def amber_result(msg, ud):
+def yolo_result(msg, ud):
   objects = msg.objects  #ud.obj_list
-  for obj in objects:
-      if obj.tag.lower() == ud.obj.value[0].lower():
-          #rospy.loginfo("In if statement")
-          ud.publish_msg = obj
-      #rospy.loginfo(obj.tag.lower())
-      #rospy.loginfo(ud.obj.value[0].lower())
-  rospy.loginfo(objects)
-
-def amber_result(msg, ud):
-  objects = msg.objects#ud.obj_list
   for obj in objects:
       if obj.tag.lower() == ud.obj.value[0].lower():
           #rospy.loginfo("In if statement")
@@ -159,9 +149,14 @@ def dialogflowresult_format(msg, ud):
 
 def main():
     rospy.init_node('integration')
+    yolo_input_topic = rospy.get_param('/ibvs/yolo_input_topic',
+                                   '/ibvs/perception/yolo_input')
 
-    yolo_target_topic = rospy.get_param('/camera/color/image_rect_color',
-                                        '/ibvs/perception/yolo_target')
+    yolo_target_topic = rospy.get_param('/ibvs/yolo_target_topic',
+                                       '/ibvs/perception/yolo_target')
+
+    bounding_box_topic = rospy.get_param('/ibvs/bounding_box',
+                                        '/ibvs/perception/bounding_box')
     
     sm_top = smach.StateMachine(outcomes=['success'])
     sm_top.userdata.parameters = []
@@ -173,48 +168,50 @@ def main():
     with sm_top:
         output_keys = ['publish_msg', 'action', 'parameters', 'obj_list', 'obj']
         input_keys = ['publish_msg', 'action', 'parameters', 'obj_list', 'obj']
-        smach.StateMachine.add('NLPsub',
+        smach.StateMachine.add('dialogflow_input',
                                WaitForMsgState('/dialogflow_client/results',
                                                DialogflowResult,
                                                msg_cb=dialogflowresult_format,
-                                               state_name="NLPsub",
+                                               state_name="dialogflow_input",
                                                output_keys=output_keys,
                                                input_keys=input_keys),
-                               transitions={'succeeded': 'NLPpub',
-                                            'aborted': 'NLPsub'})
+                               transitions={'succeeded': 'publish_yolo',
+                                            'aborted': 'dialogflow_input'})
 
         output_keys = ['publish_msg', 'action', 'parameters']
         input_keys = output_keys
-        smach.StateMachine.add('NLPpub',
-                               PublishMsgState('/nlp', state_name='NLPpub',
+        smach.StateMachine.add('publish_yolo',
+                               PublishMsgState(yolo_input_topic, state_name='publish_yolo',
                                                output_keys=output_keys,
                                                input_keys=input_keys),
-                               transitions={'succeeded': 'AMBERsub',
-                                            'aborted': 'NLPpub'})
+                               transitions={'succeeded': 'subscribe_yolo',
+                                            'aborted': 'publish_yolo'})
         output_keys = ['publish_msg', 'action', 'parameters', 'obj_list', 'obj']
         input_keys = output_keys
-        smach.StateMachine.add('AMBERsub', WaitForMsgState('/amber', YoloObjectList,
-                                                           state_name="AMBERsub",
+        smach.StateMachine.add('subscribe_yolo', WaitForMsgState(yolo_target_topic,
+                                                           YoloObjectList,
+                                                           state_name="subscribe_yolo",
                                                            output_keys=output_keys,
                                                            input_keys=input_keys,
-                                                           msg_cb=amber_result),
-                               transitions={'succeeded': 'JAKEpub',
-                                            'aborted': 'AMBERsub'})
-        smach.StateMachine.add('AMBERpub', PublishMsgState('/amber', state_name='AMBERpub',
-                                                           output_keys=['publish_msg', 'action', 'parameters'],
-                                                           input_keys=['publish_msg', 'action', 'parameters']),
-                               transitions={'succeeded': 'JAKEsub',
-                                            'aborted': 'AMBERsub'})
-        smach.StateMachine.add('JAKEsub', WaitForMsgState('/amber', YoloObject, state_name='JAKEsub',
-                                                          output_keys=['publish_msg', 'action', 'parameters'],
-                                                          input_keys=['publish_msg', 'action', 'parameters']),
-                               transitions={'succeeded': 'JAKEpub',
-                                            'aborted': 'JAKEsub'})
-        smach.StateMachine.add('JAKEpub', PublishMsgState('/jake', state_name='JAKEpub', message_type=YoloObject,
+                                                           msg_cb=yolo_result),
+                               transitions={'succeeded': 'publish_perception',
+                                            'aborted': 'subscribe_yolo'})
+        # smach.StateMachine.add('AMBERpub', PublishMsgState('/amber', state_name='AMBERpub',
+        #                                                    output_keys=['publish_msg', 'action', 'parameters'],
+        #                                                    input_keys=['publish_msg', 'action', 'parameters']),
+        #                        transitions={'succeeded': 'JAKEsub',
+        #                                     'aborted': 'AMBERsub'})
+        # smach.StateMachine.add('JAKEsub', WaitForMsgState('/amber', YoloObject, state_name='JAKEsub',
+        #                                                   output_keys=['publish_msg', 'action', 'parameters'],
+        #                                                   input_keys=['publish_msg', 'action', 'parameters']),
+        #                        transitions={'succeeded': 'JAKEpub',
+        #                                     'aborted': 'JAKEsub'})
+        smach.StateMachine.add('publish_perception', PublishMsgState(bounding_box_topic, state_name='publish_perception',
+                                                          message_type=YoloObject,
                                                           output_keys=['publish_msg', 'action', 'parameters'],
                                                           input_keys=['publish_msg', 'action', 'parameters']),
                                transitions={'succeeded': 'ANASpub',
-                                            'aborted': 'JAKEpub'})
+                                            'aborted': 'publish_perception'})
         smach.StateMachine.add('ANASsub', WaitForMsgState('/jake', YoloObject, state_name='ANASsub',
                                                           output_keys=['publish_msg', 'action', 'parameters'],
                                                           input_keys=['publish_msg', 'action', 'parameters']),

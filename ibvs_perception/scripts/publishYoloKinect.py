@@ -72,8 +72,10 @@ def callback(data):
 
 
 def main(args):
+    input_topic = rospy.get_param('/ibvs/yolo_input_topic',
+                                   '/ibvs/perception/yolo_input')
     rospy.init_node('YoloMock', anonymous=True)
-    rospy.Subscriber("/nlp", String, callback)
+    rospy.Subscriber(input_topic, String, callback)
     rospy.loginfo("Spinning...")
     rospy.spin()
 

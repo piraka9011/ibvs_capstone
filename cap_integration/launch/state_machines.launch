@@ -1,6 +1,11 @@
 <launch>
-    <include file="$(find dialogflow_ros)/launch/hotword_df.launch"/>
+    <!--<include file="$(find dialogflow_ros)/launch/hotword_df.launch"/> -->
+    <include file="$(find dialogflow_ros)/launch/dialogflow.launch"/> 
+    <include file="$(find ibvs_perception)/launch/ibvs_object_detection.launch"/>
+    <!--<include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/> -->
+    <param name="/ibvs/yolo_input_topic" type="string" value="/ibvs/perception/yolo_input"/>
     <param name="/ibvs/camera_topic" type="string" value="/camera/color/image_rect_color"/>
     <param name="/ibvs/yolo_target_topic" type="string" value="/ibvs/perception/yolo_target"/>
+    <param name="/ibvs/bounding_box" type="string" value="/ibvs/perception/bounding_box"/>
     <node name="cap_integration" pkg="cap_integration" type="state_machines.py" output="screen"/>
 </launch>
