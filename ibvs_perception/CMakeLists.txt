@@ -101,7 +101,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 # INCLUDE_DIRS include
-CATKIN_DEPENDS cmake_modules geometry_msgs message_runtime roscpp sensor_msgs std_msgs
+CATKIN_DEPENDS cmake_modules geometry_msgs message_runtime roscpp sensor_msgs std_msgs gpd
 DEPENDS OpenCV PCL
 )
 

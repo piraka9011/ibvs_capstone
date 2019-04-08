@@ -41,12 +41,13 @@ class YOLODetector:
             "yolo3_tiny": ("yolo3-obj-tiny.cfg", "obj.data", "yolo3-obj-tiny_10000.weights"),
             "yolo3": ("yolo3-objv2.cfg", "objv2-py.data", "yolo3-objv2_10000.weights"),
             "yolo3_bunny_plushie": ("yolo3_bunny_plushie.cfg", "obj_bunny_plushie.data", "yolo3_bunny_plushie_10000.weights"),
-            "yolo3_bunny_plushie_tiny": ("yolo3_bunny_plushie-tiny.cfg", "obj_bunny_plushie.data", "yolo3-tiny_bunny_plushie_10000.weights")
+            "yolo3_bunny_plushie_tiny": ("yolo3_bunny_plushie-tiny.cfg", "obj_bunny_plushie.data", "yolo3-tiny_bunny_plushie_10000.weights"),
+            "yolo3_final": ("yolo3-5th.cfg", "obj_v5.data", "yolo3-5th_30000.weights")
         }
-        self.load_net() 
-    
+        self.load_net()
+
     def _get_path(self, model_name):
-        try: 
+        try:
             _cfg_path, _meta_path, _object_weight_path = self.model_to_path[model_name]
             cfg_path = os.path.abspath(os.path.join(__file__, '..', 'darknet', 'cfg', _cfg_path))
             meta_path = os.path.abspath(os.path.join(__file__, '..', 'darknet', 'cfg', _meta_path))
@@ -152,7 +153,7 @@ class YOLODetector:
         dets = self.get_network_boxes(net, im.w, im.h, thresh,
                                 hier_thresh, None, 0, pnum)
         num = pnum[0]
-        if nms: 
+        if nms:
             self.do_nms_obj(dets, num, meta.classes, nms)
 
         res = []
@@ -166,13 +167,13 @@ class YOLODetector:
                             (b.x, b.y, b.w, b.h)))
 
         res = sorted(res, key=lambda x: -x[1])
-        if isinstance(image, bytes): 
+        if isinstance(image, bytes):
             self.free_image(im)
         self.free_detections(dets, num)
         return res
 
 
-    def run(self, img, model_name="yolo3_bunny_plushie_tiny", _meta_path=None):
+    def run(self, img, model_name="yolo3_final", _meta_path=None):
         # Using yolov3 and self-trained weights
         cfg_path, meta_path, object_weight_path = self._get_path(model_name)
         print("After get path")
@@ -187,6 +188,7 @@ class YOLODetector:
         print("After load meta")
 
         res = self._detect(net, meta, img)
+        print('res: ', res)
         print("After detect")
         return res
 
@@ -194,4 +196,4 @@ if __name__ == '__main__':
     yolo3_bunny_meta_path = os.path.abspath(os.path.join(__file__, '..', 'darknet', 'cfg', 'obj_bunny_plushie-py_main.data'))
     img = cv2.imread('./bunny_plushie_1.jpg')
     d = YOLODetector()
-    print d.run(img, "yolo3_bunny_plushie_tiny", yolo3_bunny_meta_path)
+    print d.run(img, "yolo3_final", yolo3_bunny_meta_path)

@@ -82,6 +82,7 @@
             <!--<param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>-->
         <!--</node>-->
     </group>
+
     <group unless="$(arg debug)">
         <node name="ibvs_yolo_kinect" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen">
             <param name="/camera_topic" type="str" value="$(arg image_topic)"/>

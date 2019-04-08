@@ -1,0 +1,81 @@
+Demo Directions so far:
+
+roslaunch cap_integration state_machines.launch
+
+should launch:
+* dialogflow (speech or text depending on which is commented out)
+* object detection
+* realsense (commented out because someone in the lab was running it)
+* state machines
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Keeping below in case it we need to go back
+
+Open a terminal:
+cd /home/piraka/sawyer_ws
+./intera.sh
+rosrun rviz rviz
+
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+roslaunch realsense2_camera rs_rgbd.launch
+
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+roscore
+
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+If using speech:
+Type 'roslaunch dialogflow_ros hotword_df.launch' but don't run yet
+If not using speech:
+Type 'roslaunch dialogflow_ros dialogflow.launch' but don't run yet
+
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+Type 'rosrun cap_integration state_machines.py' but don't run yet
+
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+Type 'rosrun perception publishYoloKinect.py' but don't run yet
+
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+Type 'rostopic echo /jake' but don't run yet
+
+Only if not using speech
+Open another terminal
+cd /home/piraka/sawyer_ws
+./intera.sh
+Type rostopic pub /dialogflow_client/requests/string_msg std_msgs/String "'data: grab the bunny'"     but don't run yet
+
+
+Set the bunny plushie very close to the camera (this is the only way I could get it work, I think because the gpd
+makes the image very distorted)
+
+Run the dialogflow command you typed out earlier
+Run the integration command you typed out earlier
+Run the perception command you typed out earlier
+Run the rostopic echo command you typed out earlier
+If not using speech run the rostopic pub command
+Otherwise say the phrase "Hey Jarvis, grab the bunny"
+Observe the rostopic echo tab for Jake's topic message which should eventually contain the bunny object
+Before exiting terminals make sure processes are stopped (either Ctrl+C or Ctrl+Z)
