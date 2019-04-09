@@ -11,7 +11,6 @@ from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler, quaternion_multiply
 import tf2_ros
-from visualization_msgs.msg import Marker
 from sensor_msgs import point_cloud2
 
 from math import pi
@@ -46,6 +45,8 @@ class BestGrasps:
         self.y_min, self.y_max = -0.21, -0.09
         self.z_min, self.z_max = 0.0, 2.0
 
+        self.camera_frame = rospy.get_param('/ibvs_best_grip/camera_frame',
+                                            'camera_link')
         grasp_topic = rospy.get_param('/ibvs_best_grip/grasp_topic',
                                       '/ibvs_perception/best_grasp')
         self.grasp_pub = rospy.Publisher(grasp_topic, GraspConfig, queue_size=10)
@@ -62,7 +63,10 @@ class BestGrasps:
         self.pc_pub = rospy.Publisher(filter_cloud_topic, PointCloud2, queue_size=100)
 
         rospy.loginfo("Parameters:\nGrasp Topic: {}\nCloud Topic: {}\nFiltered "
-                      "Cloud Topic: {}".format(grasp_topic, cloud_topic, filter_cloud_topic))
+                      "Cloud Topic: {}\nCamera Frame: {}".format(grasp_topic,
+                                                                 cloud_topic,
+                                                                 filter_cloud_topic,
+                                                                 self.camera_frame))
         # Wait for grasps to arrive.
         rate = rospy.Rate(0.1)
         while grasp_sub.get_num_connections() == 0:
@@ -126,7 +130,7 @@ class BestGrasps:
     def _grasp_to_tf(self, grasp):
         tf_stamped = TransformStamped()
         tf_stamped.child_frame_id = 'grasp'
-        tf_stamped.header.frame_id = 'kinect2_link'
+        tf_stamped.header.frame_id = self.camera_frame
 
         # Translation
         sample = grasp.sample
@@ -157,7 +161,7 @@ class BestGrasps:
         # Create one for translation
         Tr = tf_stamped
         Qt = quaternion_multiply(Qg, R('x', pi))
-        Qt = quaternion_multiply(Qt, R('z', pi/2))
+        # Qt = quaternion_multiply(Qt, R('z', pi))
         Tr.transform.rotation.x = Qt[0]
         Tr.transform.rotation.y = Qt[1]
         Tr.transform.rotation.z = Qt[2]

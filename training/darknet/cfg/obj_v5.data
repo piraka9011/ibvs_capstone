@@ -1,5 +1,0 @@
-classes = 3
-train = ./data/capstone_5th/train.txt
-valid = ./data/capstone_5th/test.txt
-names = /home/piraka/sawyer_ws/src/ibvs_capstone/training/darknet/cfg/obj_v5.names
-backup = backup/

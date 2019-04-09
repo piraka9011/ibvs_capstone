@@ -1,3 +1,12 @@
 <launch>
+    <arg name="camera_topic" default="/camera/color/image_raw"/>
+    <arg name="yolo_input_topic" default="/ibvs/perception/yolo_input"/>
+    <arg name="yolo_target_topic" default="/ibvs/perception/yolo_target"/>
+    <arg name="bounding_box" default="/ibvs/perception/bounding_box"/>
+
     <node name="ibvs_object_detection" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen"/>
+    <param name="/ibvs/camera_topic" type="str" value="$(arg camera_topic)"/>
+    <param name="/ibvs/yolo_input_topic" type="str" value="$(arg yolo_input_topic)"/>
+    <param name="/ibvs/yolo_target_topic" type="str" value="$(arg yolo_target_topic)"/>
+    <param name="/ibvs/bounding_box" type="str" value="$(arg bounding_box)"/>
 </launch>

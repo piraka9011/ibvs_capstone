@@ -1,5 +1,0 @@
-classes= 1
-train = ./data/capstone/train.txt
-valid = ./data/capstone/test.txt
-names = ../../training/darknet/cfg/obj.names
-backup = backup/

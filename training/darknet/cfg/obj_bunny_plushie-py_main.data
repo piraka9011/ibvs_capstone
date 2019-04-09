@@ -1,5 +1,0 @@
-classes = 1
-train = ./data/capstone_4th/train.txt
-valid = ./data/capstone_4th/test.txt
-names = ./darknet/cfg/obj_bunny_plushie.names
-backup = backup/

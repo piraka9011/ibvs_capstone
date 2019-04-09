@@ -4,3 +4,6 @@
 [submodule "dialogflow_ros"]
 	path = dialogflow_ros
 	url = https://github.com/piraka9011/dialogflow_ros
+[submodule "dialogflow_ros"]
+	path = darknet_ros
+	url = https://github.com/leggedrobotics/darknet_ros

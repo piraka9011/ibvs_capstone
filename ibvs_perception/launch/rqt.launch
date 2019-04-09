@@ -1,0 +1,3 @@
+<launch>
+    <node name="pcl_filter" pkg="rqt_gui" type="rqt_gui" args="-s reconfigure"/>
+</launch>

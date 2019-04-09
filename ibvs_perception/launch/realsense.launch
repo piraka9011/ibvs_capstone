@@ -1,14 +1,11 @@
 <launch>
 
-    <arg name="device" default="0" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
+    <arg name="device" default="1" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
     <arg name="cloud_topic" default="/camera/depth_registered/points"/>
     <arg name="filter_cloud_topic" default="/ibvs_perception/filtered_points"/>
-<<<<<<< HEAD
     <arg name="image_topic" default="/camera/color/image_raw"/>
-=======
-    <arg name="image_topic" default="/camera/color/image_rect_color"/>
->>>>>>> 5ea1c0e7f26c9f9016cc409f41d30ade23e728cc
     <arg name="grasp_topic" default="/ibvs_perception/best_grasp"/>
+    <arg name="camera_frame" default="camera_depth_optical_frame"/>
     <arg name="debug" default="true"/>
 
     <!-- Load hand geometry parameters -->
@@ -21,7 +18,7 @@
         <arg name="node" value="detect_grasps"/>
     </include>
 
-    <node name="detect_grasps" pkg="gpd" type="detect_grasps" output="screen">
+    <node name="detect_grasps" pkg="gpd" type="detect_grasps">
 
         <param name="device" type="int" value="$(arg device)"/>
 
@@ -77,25 +74,17 @@
         <param name="min_aperture" value="0.029"/>
         <param name="max_aperture" value="0.072"/>
         <param name="num_selected" value="5"/>
-<<<<<<< HEAD
-=======
-
->>>>>>> 5ea1c0e7f26c9f9016cc409f41d30ade23e728cc
     </node>
 
     <group if="$(arg debug)">
+        <param name="/ibvs_perception/cloud_topic" type="str" value="$(arg cloud_topic)"/>
         <param name="/ibvs_perception/filter_cloud_topic" type="str" value="$(arg filter_cloud_topic)"/>
         <param name="/ibvs_perception/grasp_topic" type="str" value="$(arg grasp_topic)"/>
-<<<<<<< HEAD
         <node name="ibvs_best_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen">
             <param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>
+            <param name="/camera_frame" type="str" value="$(arg camera_frame)"/>
         </node>
-=======
-        <param name="/ibvs_perception/cloud_topic" type="str" value="$(arg cloud_topic)"/>
-        <!--<node name="ibvs_best_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen">-->
-        <!--<param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>-->
-        <!--</node>-->
->>>>>>> 5ea1c0e7f26c9f9016cc409f41d30ade23e728cc
+        <include file="$(find ibvs_perception)/launch/rqt.launch"/>
     </group>
 
     <group unless="$(arg debug)">
@@ -103,9 +92,4 @@
             <param name="/camera_topic" type="str" value="$(arg image_topic)"/>
         </node>
     </group>
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 5ea1c0e7f26c9f9016cc409f41d30ade23e728cc
 </launch>
