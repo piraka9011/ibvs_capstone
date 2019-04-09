@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/>
+    <include file="$(find ibvs_perception)/launch/rs_gpd.launch"/>
+    <include file="$(find darknet_ros)/launch/darknet_ros.launch"/>
+</launch>

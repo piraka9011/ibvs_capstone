@@ -1,13 +1,16 @@
 <launch>
 
+    <!-- GPD Params -->
     <arg name="device" default="1" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
     <arg name="cloud_topic" default="/camera/depth_registered/points"/>
+    <!-- Custom Params -->
     <arg name="filter_cloud_topic" default="/ibvs_perception/filtered_points"/>
     <arg name="image_topic" default="/camera/color/image_raw"/>
     <arg name="grasp_topic" default="/ibvs_perception/best_grasp"/>
     <arg name="camera_frame" default="camera_depth_optical_frame"/>
-    <arg name="debug" default="true"/>
+    <arg name="debug" default="false"/>
 
+    <!-- GPD -->
     <!-- Load hand geometry parameters -->
     <include file="$(find gpd)/launch/hand_geometry.launch">
         <arg name="node" value="detect_grasps"/>
@@ -76,20 +79,16 @@
         <param name="num_selected" value="5"/>
     </node>
 
+    <!-- IBVS Perception -->
+    <param name="/ibvs_perception/cloud_topic" type="str" value="$(arg cloud_topic)"/>
+    <param name="/ibvs_perception/filter_cloud_topic" type="str" value="$(arg filter_cloud_topic)"/>
+    <param name="/ibvs_perception/grasp_topic" type="str" value="$(arg grasp_topic)"/>
+    <param name="/ibvs_perception/camera_frame" type="str" value="$(arg camera_frame)"/>
+
     <group if="$(arg debug)">
-        <param name="/ibvs_perception/cloud_topic" type="str" value="$(arg cloud_topic)"/>
-        <param name="/ibvs_perception/filter_cloud_topic" type="str" value="$(arg filter_cloud_topic)"/>
-        <param name="/ibvs_perception/grasp_topic" type="str" value="$(arg grasp_topic)"/>
-        <node name="ibvs_best_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen">
-            <param name="/grasp_topic" type="str" value="$(arg grasp_topic)"/>
-            <param name="/camera_frame" type="str" value="$(arg camera_frame)"/>
-        </node>
         <include file="$(find ibvs_perception)/launch/rqt.launch"/>
     </group>
 
-    <group unless="$(arg debug)">
-        <node name="ibvs_yolo_kinect" pkg="ibvs_perception" type="publishYoloKinect.py" output="screen">
-            <param name="/camera_topic" type="str" value="$(arg image_topic)"/>
-        </node>
-    </group>
+    <node name="ibvs_yolo" pkg="ibvs_perception" type="yolo_bounder.py" output="screen"/>
+    <node name="ibvs_grip" pkg="ibvs_perception" type="bestGrip.py" output="screen"/>
 </launch>

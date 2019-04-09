@@ -1,0 +1,8 @@
+<launch>
+    <!-- Speech -->
+    <include file="$(find dialogflow_ros)/launch/hotword_df.launch"/>
+    <!-- Perception -->
+    <include file="$(find ibvs_perception)/launch/real_setup.launch"/>
+    <!-- Visual Servoing -->
+    <include file="$(find sawyer_kinematics)/launch/real_setup.launch"/>
+</launch>
