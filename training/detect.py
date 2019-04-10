@@ -42,7 +42,8 @@ class YOLODetector:
             "yolo3": ("yolo3-objv2.cfg", "objv2-py.data", "yolo3-objv2_10000.weights"),
             "yolo3_bunny_plushie": ("yolo3_bunny_plushie.cfg", "obj_bunny_plushie.data", "yolo3_bunny_plushie_10000.weights"),
             "yolo3_bunny_plushie_tiny": ("yolo3_bunny_plushie-tiny.cfg", "obj_bunny_plushie.data", "yolo3-tiny_bunny_plushie_10000.weights"),
-            "yolo3_final": ("yolo3-5th.cfg", "obj_v5.data", "yolo3-5th_30000.weights")
+            "yolo3_final_old": ("yolo3-5th.cfg", "obj_v5.data", "yolo3-5th_30000.weights"),
+            "yolo3_final": ("yolo3-6th.cfg", "obj_v6.data", "yolo3-6th_10000.weights")
         }
         self.load_net()
 
