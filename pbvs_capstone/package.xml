@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>pbvs_capstone</name>
+    <version>0.1.0</version>
+    <description>All packages for the PBVS capstone project</description>
+    <author email="anas@abouallaban.info">Anas Abou Allaban</author>
+    <maintainer email="anas@abouallaban.info">Anas Abou Allaban</maintainer>
+
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <exec_depend>apriltags2_ros</exec_depend>
+    <exec_depend>darknet_ros</exec_depend>
+    <exec_depend>dialogflow_ros</exec_depend>
+    <exec_depend>ibvs_perception</exec_depend>
+    <exec_depend>robot_utils</exec_depend>
+    <exec_depend>sawyer_kinematics</exec_depend>
+
+    <export>
+        <metapackage/>
+    </export>
+
+</package>

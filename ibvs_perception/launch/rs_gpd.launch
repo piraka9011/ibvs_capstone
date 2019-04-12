@@ -2,9 +2,11 @@
 
     <!-- GPD Params -->
     <arg name="device" default="1" doc="target device to execute inference. [0:CPU]|1:GPU|2:VPU|3:FPGA"/>
+    <!-- Kinect: /kinect2/qhd/points-->
     <arg name="cloud_topic" default="/camera/depth_registered/points"/>
     <!-- Custom Params -->
     <arg name="filter_cloud_topic" default="/ibvs_perception/filtered_points"/>
+    <!-- Kinect: /kinect2/qhd/image_color_rect -->
     <arg name="image_topic" default="/camera/color/image_raw"/>
     <arg name="grasp_topic" default="/ibvs_perception/best_grasp"/>
     <arg name="camera_frame" default="camera_depth_optical_frame"/>
@@ -86,7 +88,7 @@
     <param name="/ibvs_perception/camera_frame" type="str" value="$(arg camera_frame)"/>
 
     <group if="$(arg debug)">
-        <include file="$(find ibvs_perception)/launch/rqt.launch"/>
+        <include file="$(find ibvs_perception)/launch/ws_config.launch"/>
     </group>
 
     <node name="ibvs_yolo" pkg="ibvs_perception" type="yolo_bounder.py" output="screen"/>

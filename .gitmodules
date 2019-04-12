@@ -7,3 +7,6 @@
 [submodule "dialogflow_ros"]
 	path = darknet_ros
 	url = https://github.com/leggedrobotics/darknet_ros
+[submodule "robot_utils"]
+	path = robot_utils
+	url = https://github.com/piraka9011/robot_utils.git

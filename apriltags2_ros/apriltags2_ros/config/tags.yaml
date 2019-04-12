@@ -20,7 +20,10 @@
 standalone_tags:
   [
 #     {id: 100, size: 0.070, name: 'object'},
-     {id: 13, size: 0.171, name: 'main_tag'}
+     {id: 13, size: 0.171, name: 'main_tag'},
+     {id: 0, size: 0.0508, name: 'tag0'},
+     {id: 1, size: 0.171, name: 'tag1'},
+     {id: 2, size: 0.171, name: 'tag2'}
   ]
 # ## Tag bundle definitions
 # ### Remarks
